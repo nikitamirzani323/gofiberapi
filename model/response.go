@@ -5,4 +5,5 @@ type Response struct {
 	Message     string      `json:"message"`
 	Totalrecord int         `json:"totalrecord"`
 	Record      interface{} `json:"record"`
+	Time        string      `json:"time"`
 }

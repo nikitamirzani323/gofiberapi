@@ -10,14 +10,14 @@ import (
 )
 
 type Mclientpasaran struct {
-	IdCompPasaran      int    `json:"pasaran_id"`
-	NmPasaran          string `json:"pasaran_togel"`
-	Periode            string `json:"pasaran_periode"`
+	PasaranId          string `json:"pasaran_id"`
+	PasaranTogel       string `json:"pasaran_togel"`
+	PasaranPeriode     string `json:"pasaran_periode"`
 	PasaranTglKeluaran string `json:"pasaran_tglkeluaran"`
 	PasaranJamTutup    string `json:"pasaran_marketclose"`
 	PasaranJamJadwal   string `json:"pasaran_marketschedule"`
 	PasaranJamOpen     string `json:"pasaran_marketopen"`
-	StatusPasaran      string `json:"pasaran_status"`
+	PasaranStatus      string `json:"pasaran_status"`
 }
 
 func FetchAll_MclientPasaran(client_company string) (Response, error) {
@@ -35,8 +35,7 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	daynowhari := myDays[intVar]
 
 	sqlpasaran := `SELECT 
-		idcomppasaran, idpasarantogel, 
-		nmpasarantogel, jamtutup, jamjadwal, jamopen 
+		idcomppasaran, idpasarantogel, nmpasarantogel, jamtutup, jamjadwal, jamopen 
 		FROM client_view_pasaran  
 		WHERE statuspasaranactive = 'Y' 
 		AND idcompany = ?
@@ -111,14 +110,14 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 
 		}
 
-		obj.IdCompPasaran = idcomppasaran
-		obj.NmPasaran = nmpasarantogel
-		obj.Periode = "#" + periodekerluaran + "-" + idpasarantogel
+		obj.PasaranId = idpasarantogel
+		obj.PasaranTogel = nmpasarantogel
+		obj.PasaranPeriode = "#" + periodekerluaran + "-" + idpasarantogel
 		obj.PasaranTglKeluaran = tglkeluaran
 		obj.PasaranJamTutup = tglkeluaran + " " + jamtutup
 		obj.PasaranJamJadwal = tglkeluaran + " " + jamjadwal
 		obj.PasaranJamOpen = tglkeluaran + " " + jamopen
-		obj.StatusPasaran = statuspasaran
+		obj.PasaranStatus = statuspasaran
 		arraobj = append(arraobj, obj)
 		msg = "Success"
 	}
@@ -127,6 +126,7 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	res.Message = msg
 	res.Totalrecord = len(arraobj)
 	res.Record = arraobj
+	res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
 
 	return res, nil
 }
