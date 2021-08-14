@@ -52,8 +52,8 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 		DB:       conf.DB_NAME,
 	})
 
+	// rdb.Del(ctx, "listpasaran_"+client.Client_Company)
 	resultredis, err := rdb.Get(ctx, "listpasaran_"+client.Client_Company).Result()
-
 	if err == redis.Nil {
 		result, err := model.FetchAll_MclientPasaran(client.Client_Company)
 
@@ -74,6 +74,7 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 		return c.JSON(result)
 	} else {
 		log.Println("cache")
+		rdb.Close()
 		return c.SendString(resultredis)
 	}
 }
