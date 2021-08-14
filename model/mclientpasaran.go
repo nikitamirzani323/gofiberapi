@@ -85,12 +85,12 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 		msg = "Success"
 	}
 	tglnow, _ := goment.New()
-	log.Println(arraobj)
+	// log.Println(arraobj)
 	log.Println(tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
-	for i := 0; i < len(arraobj); i++ {
-		log.Println(arraobj[i].IdCompPasaran)
-	}
+	// for i := 0; i < len(arraobj); i++ {
+	// 	log.Println(arraobj[i].IdCompPasaran)
+	// }
 
 	res.Status = fiber.StatusOK
 	res.Message = msg
