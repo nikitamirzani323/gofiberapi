@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,10 +20,11 @@ type Mclientpasaran struct {
 	StatusPasaran    string `json:"StatusPasaran"`
 }
 
-func FetchAll_MclientPasaran() (Response, error) {
+func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	var obj Mclientpasaran
 	var arraobj []Mclientpasaran
 	var res Response
+	msg := "Error"
 	con := db.CreateCon()
 
 	sqlpasaran := `SELECT 
@@ -30,8 +32,9 @@ func FetchAll_MclientPasaran() (Response, error) {
 		nmpasarantogel, jamtutup, jamjadwal, jamopen 
 		FROM client_view_pasaran 
 		WHERE statuspasaranactive = 'Y' 
+		AND idcompany = ?
 	`
-	rowspasaran, err := con.Query(sqlpasaran)
+	rowspasaran, err := con.Query(sqlpasaran, client_company)
 	defer rowspasaran.Close()
 
 	if err != nil {
@@ -67,7 +70,7 @@ func FetchAll_MclientPasaran() (Response, error) {
 		err := con.QueryRow(sqlkeluaran, idcomppasaran).Scan(&tglkeluaran, &periodekerluaran)
 
 		if err != nil {
-			return res, err
+			return res, errors.New("Not Found")
 		}
 
 		obj.IdCompPasaran = idcomppasaran
@@ -79,6 +82,7 @@ func FetchAll_MclientPasaran() (Response, error) {
 		obj.PasaranJamOpen = tglkeluaran + " " + jamopen
 		obj.StatusPasaran = "ONLINE"
 		arraobj = append(arraobj, obj)
+		msg = "Success"
 	}
 	tglnow, _ := goment.New()
 	log.Println(arraobj)
@@ -89,7 +93,7 @@ func FetchAll_MclientPasaran() (Response, error) {
 	}
 
 	res.Status = fiber.StatusOK
-	res.Message = "Success"
+	res.Message = msg
 	res.Totalrecord = len(arraobj)
 	res.Record = arraobj
 

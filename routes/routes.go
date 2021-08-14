@@ -27,6 +27,6 @@ func Init() *fiber.App {
 			"Subdomain":   c.Subdomains(),
 		})
 	})
-	app.Get("/api/pasaran", controller.FetchAll_pasaran)
+	app.Post("/api/pasaran", controller.FetchAll_pasaran)
 	return app
 }
