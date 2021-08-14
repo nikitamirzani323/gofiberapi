@@ -1,8 +1,8 @@
 package model
 
 import (
-	"errors"
-	"log"
+	"database/sql"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/nikitamirzani323/gofiberapi/db"
@@ -10,25 +10,32 @@ import (
 )
 
 type Mclientpasaran struct {
-	IdCompPasaran    int    `json:"IdCompPasaran"`
-	IdComp           string `json:"IdCompany"`
-	NmPasaran        string `json:"NamaPasaran"`
-	Periode          string `json:"Periode"`
-	PasaranJamTutup  string `json:"Pasaran_Tutup"`
-	PasaranJamJadwal string `json:"Pasaran_Jadwal"`
-	PasaranJamOpen   string `json:"Pasaran_Open"`
-	StatusPasaran    string `json:"StatusPasaran"`
+	IdCompPasaran      int    `json:"pasaran_id"`
+	NmPasaran          string `json:"pasaran_togel"`
+	Periode            string `json:"pasaran_periode"`
+	PasaranTglKeluaran string `json:"pasaran_tglkeluaran"`
+	PasaranJamTutup    string `json:"pasaran_marketclose"`
+	PasaranJamJadwal   string `json:"pasaran_marketschedule"`
+	PasaranJamOpen     string `json:"pasaran_marketopen"`
+	StatusPasaran      string `json:"pasaran_status"`
 }
 
 func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	var obj Mclientpasaran
 	var arraobj []Mclientpasaran
 	var res Response
+	var myDays = []string{"minggu", "senin", "selasa", "rabu", "kamis", "jumat", "sabtu"}
+	statuspasaran := "ONLINE"
 	msg := "Error"
 	con := db.CreateCon()
 
+	tglnow, _ := goment.New()
+	daynow := tglnow.Format("d")
+	intVar, _ := strconv.ParseInt(daynow, 0, 8)
+	daynowhari := myDays[intVar]
+
 	sqlpasaran := `SELECT 
-		idcomppasaran, idcompany, idpasarantogel, 
+		idcomppasaran, idpasarantogel, 
 		nmpasarantogel, jamtutup, jamjadwal, jamopen 
 		FROM client_view_pasaran 
 		WHERE statuspasaranactive = 'Y' 
@@ -42,11 +49,10 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	}
 	for rowspasaran.Next() {
 		var idcomppasaran int
-		var idpasarantogel, idcompany, nmpasarantogel, jamtutup, jamjadwal, jamopen string
+		var idpasarantogel, nmpasarantogel, jamtutup, jamjadwal, jamopen string
 
 		err = rowspasaran.Scan(
 			&idcomppasaran,
-			&idcompany,
 			&idpasarantogel,
 			&nmpasarantogel,
 			&jamtutup,
@@ -59,38 +65,63 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 		var tglkeluaran, periodekerluaran string
 
 		sqlkeluaran := `
-		SELECT 
-		datekeluaran, keluaranperiode
-		FROM 
-			tbl_trx_keluarantogel 
-		WHERE idcomppasaran = ?
-		ORDER BY datekeluaran DESC
-		LIMIT 1
+			SELECT 
+			datekeluaran, keluaranperiode
+			FROM 
+				tbl_trx_keluarantogel 
+			WHERE idcomppasaran = ?
+			ORDER BY datekeluaran DESC
+			LIMIT 1
 		`
 		err := con.QueryRow(sqlkeluaran, idcomppasaran).Scan(&tglkeluaran, &periodekerluaran)
 
 		if err != nil {
-			return res, errors.New("Not Found")
+			return res, err
+		}
+
+		var haripasaran string
+		sqlpasaranonline := `
+			SELECT
+				haripasaran
+			FROM
+				tbl_mst_company_game_pasaran_offline
+			WHERE idcomppasaran = ?
+			AND idcompany = ? 
+			AND haripasaran = ? 
+		`
+
+		errpasaranonline := con.QueryRow(sqlpasaranonline, idcomppasaran, client_company, daynowhari).Scan(&haripasaran)
+
+		if errpasaranonline != sql.ErrNoRows {
+			jamtutup := tglnow.Format("YYYY-MM-DD") + " " + jamtutup
+			jamopen := tglnow.Format("YYYY-MM-DD") + " " + jamopen
+			tutup, _ := goment.New(jamtutup)
+			open, _ := goment.New(jamopen)
+			nowconvert := tglnow.Format("x")
+			tutupconvert := tutup.Format("x")
+			openconvert := open.Format("x")
+
+			intNow, _ := strconv.Atoi(nowconvert)
+			intTutup, _ := strconv.Atoi(tutupconvert)
+			intOpen, _ := strconv.Atoi(openconvert)
+
+			if intNow >= intTutup && intNow <= intOpen {
+				statuspasaran = "OFFLINE"
+			}
+
 		}
 
 		obj.IdCompPasaran = idcomppasaran
-		obj.IdComp = idcompany
 		obj.NmPasaran = nmpasarantogel
 		obj.Periode = "#" + periodekerluaran + "-" + idpasarantogel
+		obj.PasaranTglKeluaran = tglkeluaran
 		obj.PasaranJamTutup = tglkeluaran + " " + jamtutup
 		obj.PasaranJamJadwal = tglkeluaran + " " + jamjadwal
 		obj.PasaranJamOpen = tglkeluaran + " " + jamopen
-		obj.StatusPasaran = "ONLINE"
+		obj.StatusPasaran = statuspasaran
 		arraobj = append(arraobj, obj)
 		msg = "Success"
 	}
-	tglnow, _ := goment.New()
-	// log.Println(arraobj)
-	log.Println(tglnow.Format("YYYY-MM-DD HH:mm:ss"))
-
-	// for i := 0; i < len(arraobj); i++ {
-	// 	log.Println(arraobj[i].IdCompPasaran)
-	// }
 
 	res.Status = fiber.StatusOK
 	res.Message = msg
