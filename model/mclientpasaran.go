@@ -12,6 +12,7 @@ type Mclientpasaran struct {
 	IdCompPasaran    int    `json:"IdCompPasaran"`
 	IdComp           string `json:"IdCompany"`
 	NmPasaran        string `json:"NamaPasaran"`
+	Periode          string `json:"Periode"`
 	PasaranJamTutup  string `json:"Pasaran_Tutup"`
 	PasaranJamJadwal string `json:"Pasaran_Jadwal"`
 	PasaranJamOpen   string `json:"Pasaran_Open"`
@@ -24,25 +25,26 @@ func FetchAll_MclientPasaran() (Response, error) {
 	var res Response
 	con := db.CreateCon()
 
-	sql := `SELECT 
-		idcomppasaran, idcompany, 
+	sqlpasaran := `SELECT 
+		idcomppasaran, idcompany, idpasarantogel, 
 		nmpasarantogel, jamtutup, jamjadwal, jamopen 
 		FROM client_view_pasaran 
 		WHERE statuspasaranactive = 'Y' 
 	`
-	rows, err := con.Query(sql)
-	defer rows.Close()
+	rowspasaran, err := con.Query(sqlpasaran)
+	defer rowspasaran.Close()
 
 	if err != nil {
 		return res, err
 	}
-	for rows.Next() {
+	for rowspasaran.Next() {
 		var idcomppasaran int
-		var idcompany, nmpasarantogel, jamtutup, jamjadwal, jamopen string
+		var idpasarantogel, idcompany, nmpasarantogel, jamtutup, jamjadwal, jamopen string
 
-		err = rows.Scan(
+		err = rowspasaran.Scan(
 			&idcomppasaran,
 			&idcompany,
+			&idpasarantogel,
 			&nmpasarantogel,
 			&jamtutup,
 			&jamjadwal,
@@ -50,12 +52,31 @@ func FetchAll_MclientPasaran() (Response, error) {
 		if err != nil {
 			return res, err
 		}
+
+		var tglkeluaran, periodekerluaran string
+
+		sqlkeluaran := `
+		SELECT 
+		datekeluaran, keluaranperiode
+		FROM 
+			tbl_trx_keluarantogel 
+		WHERE idcomppasaran = ?
+		ORDER BY datekeluaran DESC
+		LIMIT 1
+		`
+		err := con.QueryRow(sqlkeluaran, idcomppasaran).Scan(&tglkeluaran, &periodekerluaran)
+
+		if err != nil {
+			return res, err
+		}
+
 		obj.IdCompPasaran = idcomppasaran
 		obj.IdComp = idcompany
 		obj.NmPasaran = nmpasarantogel
-		obj.PasaranJamTutup = jamtutup
-		obj.PasaranJamJadwal = jamjadwal
-		obj.PasaranJamOpen = jamopen
+		obj.Periode = "#" + periodekerluaran + "-" + idpasarantogel
+		obj.PasaranJamTutup = tglkeluaran + " " + jamtutup
+		obj.PasaranJamJadwal = tglkeluaran + " " + jamjadwal
+		obj.PasaranJamOpen = tglkeluaran + " " + jamopen
 		obj.StatusPasaran = "ONLINE"
 		arraobj = append(arraobj, obj)
 	}
