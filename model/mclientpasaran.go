@@ -37,7 +37,7 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	sqlpasaran := `SELECT 
 		idcomppasaran, idpasarantogel, 
 		nmpasarantogel, jamtutup, jamjadwal, jamopen 
-		FROM client_view_pasaran 
+		FROM client_view_pasaran  
 		WHERE statuspasaranactive = 'Y' 
 		AND idcompany = ?
 	`
@@ -48,8 +48,11 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 		return res, err
 	}
 	for rowspasaran.Next() {
-		var idcomppasaran int
-		var idpasarantogel, nmpasarantogel, jamtutup, jamjadwal, jamopen string
+		var (
+			idcomppasaran                                                int
+			idpasarantogel, nmpasarantogel, jamtutup, jamjadwal, jamopen string
+			tglkeluaran, periodekerluaran, haripasaran                   string
+		)
 
 		err = rowspasaran.Scan(
 			&idcomppasaran,
@@ -61,8 +64,6 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 		if err != nil {
 			return res, err
 		}
-
-		var tglkeluaran, periodekerluaran string
 
 		sqlkeluaran := `
 			SELECT 
@@ -79,7 +80,6 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 			return res, err
 		}
 
-		var haripasaran string
 		sqlpasaranonline := `
 			SELECT
 				haripasaran
