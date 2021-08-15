@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/buger/jsonparser"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/nikitamirzani323/gofiberapi/config"
@@ -20,6 +21,14 @@ type ClientInit struct {
 type ClientResult struct {
 	Client_Company string `json:"client_company"`
 	Pasaran_Code   string `json:"pasaran_code"`
+}
+type parsingjson struct {
+	Record []ytRecord `json:"record"`
+}
+type ytRecord struct {
+	PasaranId      string `json:"pasaran_id"`
+	PasaranTogel   string `json:"pasaran_togel"`
+	PasaranPeriode string `json:"pasaran_periode"`
 }
 
 var ctx = context.Background()
@@ -77,6 +86,36 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 		}
 		return c.JSON(result)
 	} else {
+		data := []byte(resultredis)
+		temp, _, _, _ := jsonparser.Get(data, "record")
+
+		jsonparser.ArrayEach(temp, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			var1, _, _, _ := jsonparser.Get(value, "pasaran_id")
+			var2, _, _, _ := jsonparser.Get(value, "pasaran_togel")
+			var3, _, _, _ := jsonparser.Get(value, "pasaran_periode")
+			var4, _, _, _ := jsonparser.Get(value, "pasaran_tglkeluaran")
+			log.Printf("%s - %s - %s - %s\n", string(var1), string(var2), string(var3), string(var4))
+		})
+		// log.Println(jsonparser.GetString(data, "person", "avatars", "[0]", "url"))
+		// jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		// 	// log.Printf("Key: '%s'\n Value: '%s'\n Type: %s\n", string(key), string(value), dataType)
+		// 	log.Printf("Value: '%s'\n Type: %s\n", string(value), dataType)
+		// 	return nil
+		// }, "person", "name")
+		// jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		// 	var1, _, _, _ := jsonparser.Get(value, "pasaran_id")
+		// 	var2, _, _, _ := jsonparser.Get(value, "pasaran_togel")
+		// 	log.Printf("Value: '%s'\n Type: %s\n", string(var1), string(var2))
+		// }, "record")
+		// // var y parsingjson
+		// err := json.Unmarshal([]byte(resultredis), &y)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// log.Printf("go data: %+v\n", y.Record)
+
+		// log.Println(data)
 		log.Println("cache")
 		rdb.Close()
 		return c.SendString(resultredis)

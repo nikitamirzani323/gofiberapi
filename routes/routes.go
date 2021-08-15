@@ -32,6 +32,6 @@ func Init() *fiber.App {
 	app.Post("/api/servicetoken", controller.Fetch_token)
 	app.Post("/api/serviceresult", controller.FetchAll_result)
 	app.Post("/api/servicecheckpasaran", controller.Fetch_CheckPasaran)
-	app.Post("/api/pasaran", controller.FetchAll_pasaran)
+	app.Post("/api/serviceinit", controller.FetchAll_pasaran)
 	return app
 }

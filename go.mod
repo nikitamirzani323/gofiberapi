@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/andybalholm/brotli v1.0.3 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.3 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
