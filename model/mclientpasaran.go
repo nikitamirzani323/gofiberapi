@@ -19,6 +19,12 @@ type Mclientpasaran struct {
 	PasaranJamOpen     string `json:"pasaran_marketopen"`
 	PasaranStatus      string `json:"pasaran_status"`
 }
+type MclientpasaranResult struct {
+	No      string `json:"no"`
+	Date    string `json:"date"`
+	Periode string `json:"periode"`
+	Result  string `json:"result"`
+}
 
 func FetchAll_MclientPasaran(client_company string) (Response, error) {
 	var obj Mclientpasaran
