@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"runtime"
 
 	"github.com/buger/jsonparser"
 	"github.com/go-redis/redis/v8"
@@ -86,16 +87,19 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 		}
 		return c.JSON(result)
 	} else {
-		data := []byte(resultredis)
-		temp, _, _, _ := jsonparser.Get(data, "record")
+		runtime.GOMAXPROCS(2)
+		go func() {
+			data := []byte(resultredis)
+			temp, _, _, _ := jsonparser.Get(data, "record")
 
-		jsonparser.ArrayEach(temp, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-			var1, _, _, _ := jsonparser.Get(value, "pasaran_id")
-			var2, _, _, _ := jsonparser.Get(value, "pasaran_togel")
-			var3, _, _, _ := jsonparser.Get(value, "pasaran_periode")
-			var4, _, _, _ := jsonparser.Get(value, "pasaran_tglkeluaran")
-			log.Printf("%s - %s - %s - %s\n", string(var1), string(var2), string(var3), string(var4))
-		})
+			jsonparser.ArrayEach(temp, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+				var1, _, _, _ := jsonparser.Get(value, "pasaran_id")
+				var2, _, _, _ := jsonparser.Get(value, "pasaran_togel")
+				var3, _, _, _ := jsonparser.Get(value, "pasaran_periode")
+				var4, _, _, _ := jsonparser.Get(value, "pasaran_tglkeluaran")
+				log.Printf("%s - %s - %s - %s\n", string(var1), string(var2), string(var3), string(var4))
+			})
+		}()
 
 		log.Println("cache")
 		rdb.Close()
