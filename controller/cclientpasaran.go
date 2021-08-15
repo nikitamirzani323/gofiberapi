@@ -96,26 +96,7 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 			var4, _, _, _ := jsonparser.Get(value, "pasaran_tglkeluaran")
 			log.Printf("%s - %s - %s - %s\n", string(var1), string(var2), string(var3), string(var4))
 		})
-		// log.Println(jsonparser.GetString(data, "person", "avatars", "[0]", "url"))
-		// jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		// 	// log.Printf("Key: '%s'\n Value: '%s'\n Type: %s\n", string(key), string(value), dataType)
-		// 	log.Printf("Value: '%s'\n Type: %s\n", string(value), dataType)
-		// 	return nil
-		// }, "person", "name")
-		// jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		// 	var1, _, _, _ := jsonparser.Get(value, "pasaran_id")
-		// 	var2, _, _, _ := jsonparser.Get(value, "pasaran_togel")
-		// 	log.Printf("Value: '%s'\n Type: %s\n", string(var1), string(var2))
-		// }, "record")
-		// // var y parsingjson
-		// err := json.Unmarshal([]byte(resultredis), &y)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
 
-		// log.Printf("go data: %+v\n", y.Record)
-
-		// log.Println(data)
 		log.Println("cache")
 		rdb.Close()
 		return c.SendString(resultredis)
