@@ -20,7 +20,7 @@ type Mclientpasaran struct {
 	PasaranStatus      string `json:"pasaran_status"`
 }
 type MclientpasaranResult struct {
-	No      string `json:"no"`
+	No      uint16 `json:"no"`
 	Date    string `json:"date"`
 	Periode string `json:"periode"`
 	Result  string `json:"result"`
@@ -128,11 +128,82 @@ func FetchAll_MclientPasaran(client_company string) (Response, error) {
 		msg = "Success"
 	}
 
-	res.Status = fiber.StatusOK
-	res.Message = msg
-	res.Totalrecord = len(arraobj)
-	res.Record = arraobj
-	res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
+	if len(arraobj) > 0 {
+		res.Status = fiber.StatusOK
+		res.Message = msg
+		res.Totalrecord = len(arraobj)
+		res.Record = arraobj
+		res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
+	} else {
+		res.Status = fiber.StatusBadRequest
+		res.Message = "Not Found"
+		res.Totalrecord = 0
+		res.Record = nil
+		res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
+	}
+
+	return res, nil
+}
+
+func FetchAll_MclientPasaranResult(client_company, pasaran_code string) (Response, error) {
+	var obj MclientpasaranResult
+	var arraobj []MclientpasaranResult
+	var res Response
+	msg := "Error"
+	con := db.CreateCon()
+	tglnow, _ := goment.New()
+
+	sqlresult := `SELECT 
+		A.keluaranperiode, A.datekeluaran, 
+		A.keluarantogel, B.idpasarantogel 
+		FROM tbl_trx_keluarantogel as A 
+		JOIN tbl_mst_company_game_pasaran as B ON B.idcomppasaran = A.idcomppasaran
+		WHERE B.idcompany = ? 
+		AND B.idpasarantogel = ?
+	`
+	rowresult, err := con.Query(sqlresult, client_company, pasaran_code)
+	defer rowresult.Close()
+
+	if err != nil {
+		return res, err
+	}
+	var norecord uint16 = 1
+	for rowresult.Next() {
+		var (
+			keluaranperiode                             string
+			datekeluaran, keluarantogel, idpasarantogel string
+		)
+
+		err = rowresult.Scan(
+			&keluaranperiode,
+			&datekeluaran,
+			&keluarantogel,
+			&idpasarantogel)
+		if err != nil {
+			return res, err
+		}
+
+		obj.No = norecord
+		obj.Date = datekeluaran
+		obj.Periode = idpasarantogel + "-" + keluaranperiode
+		obj.Result = keluarantogel
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+		norecord = norecord + 1
+	}
+	if len(arraobj) > 0 {
+		res.Status = fiber.StatusOK
+		res.Message = msg
+		res.Totalrecord = len(arraobj)
+		res.Record = arraobj
+		res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
+	} else {
+		res.Status = fiber.StatusBadRequest
+		res.Message = "Not Found"
+		res.Totalrecord = 0
+		res.Record = nil
+		res.Time = tglnow.Format("YYYY-MM-DD HH:mm:ss")
+	}
 
 	return res, nil
 }

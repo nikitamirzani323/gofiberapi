@@ -17,6 +17,10 @@ type ClientToken struct {
 type ClientInit struct {
 	Client_Company string `json:"client_company"`
 }
+type ClientResult struct {
+	Client_Company string `json:"client_company"`
+	Pasaran_Code   string `json:"pasaran_code"`
+}
 
 var ctx = context.Background()
 
@@ -70,6 +74,47 @@ func FetchAll_pasaran(c *fiber.Ctx) error {
 		err = rdb.Set(ctx, "listpasaran_"+client.Client_Company, json, 0).Err()
 		if err != nil {
 			panic(err)
+		}
+		return c.JSON(result)
+	} else {
+		log.Println("cache")
+		rdb.Close()
+		return c.SendString(resultredis)
+	}
+}
+func FetchAll_result(c *fiber.Ctx) error {
+	client := new(ClientResult)
+
+	if err := c.BodyParser(client); err != nil {
+		return err
+	}
+
+	conf := config.GetConfigRedis()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     conf.DB_HOST,
+		Password: conf.DB_PASSWORD,
+		DB:       conf.DB_NAME,
+	})
+	resultredis, err := rdb.Get(ctx, "listresult_"+client.Client_Company+"_"+client.Pasaran_Code).Result()
+	if err == redis.Nil {
+		result, err := model.FetchAll_MclientPasaranResult(client.Client_Company, client.Pasaran_Code)
+
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+
+		log.Println("mysql")
+		if result.Status == 200 {
+			json, _ := json.Marshal(result)
+			err = rdb.Set(ctx, "listresult_"+client.Client_Company+"_"+client.Pasaran_Code, json, 0).Err()
+			if err != nil {
+				panic(err)
+			}
 		}
 		return c.JSON(result)
 	} else {
